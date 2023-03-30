@@ -1,38 +1,63 @@
-import * as React from "react"
+import * as React from "react";
 import {
   ChakraProvider,
-  Box,
-  Text,
-  Link,
-  VStack,
-  Code,
-  Grid,
   theme,
-} from "@chakra-ui/react"
-import { ColorModeSwitcher } from "./ColorModeSwitcher"
-import { Logo } from "./Logo"
+  Flex,
+  useMediaQuery,
+  Box,
+} from "@chakra-ui/react";
+import { ColorModeSwitcher } from "./ColorModeSwitcher";
+import { useState } from "react";
+import { UserType } from "./interfaces/user.interface";
+import CardUserItem from "./components/CardUserItem";
+import { initialData } from "./helpers/dataStatic";
 
-export const App = () => (
-  <ChakraProvider theme={theme}>
-    <Box textAlign="center" fontSize="xl">
-      <Grid minH="100vh" p={3}>
-        <ColorModeSwitcher justifySelf="flex-end" />
-        <VStack spacing={8}>
-          <Logo h="40vmin" pointerEvents="none" />
-          <Text>
-            Edit <Code fontSize="xl">src/App.tsx</Code> and save to reload.
-          </Text>
-          <Link
-            color="teal.500"
-            href="https://chakra-ui.com"
-            fontSize="2xl"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn Chakra
-          </Link>
-        </VStack>
-      </Grid>
-    </Box>
-  </ChakraProvider>
-)
+export const App = () => {
+  const [data, setData] = useState<UserType[]>(initialData);
+  const [currentUser, setCurrentUser] = useState<UserType>(
+    data.find((i) => i.isActive) as UserType
+  );
+  const [isMobile] = useMediaQuery("(max-width: 600px)");
+  const handleActiveUser = (id: number | string, index: number) => {
+    let newData = data.map((user) => {
+      if (user.id === id) {
+        return { ...user, isActive: true };
+      }
+      return { ...user, isActive: false };
+    });
+
+    const eleMiddleIndex = Math.ceil(newData.length / 2) - 1;
+    const eleCrr = newData[index];
+    newData[index] = newData[eleMiddleIndex];
+    newData[eleMiddleIndex] = eleCrr;
+
+    setCurrentUser(eleCrr);
+    setData(newData);
+  };
+
+  return (
+    <ChakraProvider theme={theme}>
+      <ColorModeSwitcher justifySelf="flex-end" />
+      <Flex w="full" justifyContent="center" alignItems="flex-start" h="90vh">
+        <Box height="600px">
+          <Flex gap={4} alignItems="center" mt={16}>
+            {data.map((item, index) => (
+              <CardUserItem
+                {...item}
+                isRotate={item.isActive}
+                key={item.id}
+                isMobile={isMobile}
+                onClickItem={(id) => handleActiveUser(id, index)}
+              />
+            ))}
+          </Flex>
+          {currentUser && isMobile && (
+            <Box mt={6}>
+              <CardUserItem {...currentUser} isRotate={false} />
+            </Box>
+          )}
+        </Box>
+      </Flex>
+    </ChakraProvider>
+  );
+};
